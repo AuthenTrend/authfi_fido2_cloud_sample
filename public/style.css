@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap');
+body{font-family:'Noto Sans TC', sans-serif;background-color:#f0f0f8;}
+.menu{float:left;width:10%;height:100vh;text-align:center;font-size:22px;background-color:white;}
+.panel{float:left;width:90%;height:100vh;overflow-y:scroll}
+.w-area{margin:15px 20px;font-size:18px;}
+.block{margin:10px 13px;border:5px 5px;float:left;height:100%;}
+.block-title{display:block;color:#489d64}
+.block-line{display:block;width:100%;height:20px;margin-top:20px;border-top:solid #ACC0D8 1px;}
+.block-row{display:block;width:100%;height:300px;}
+.fr{float:right}
+.fl{float:left}
+.br{display:block}
+.sub-title{height:50px;display:flex;align-items:center;font-size:16px}
+.pad{height:18px;display:block;}
+.sel{color:#8b9cf8}
+a{text-align:center;display:block;background-color:#6a8faf;margin:5px;padding:10px 20px;border-radius:6px;text-decoration:none;color:white;width:190px}
+input[type=text]{display:block;background:white;border-radius:6px;border:0;width:95%;height:40px;font-size:medium;margin:10px 10px 10px 0px}
+textarea{width:100%;height:70%;border-radius:6px;border:0;resize:none}
+::-webkit-scrollbar{width:20px;}
+::-webkit-scrollbar-track{background-color:transparent;}
+::-webkit-scrollbar-thumb{background-color:#d6dee1;border-radius:20px;border:6px solid transparent;background-clip:content-box;}
+::-webkit-scrollbar-thumb:hover{background-color:#a8bbbf;}

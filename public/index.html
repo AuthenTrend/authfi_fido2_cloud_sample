@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AuthFi RP sample</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/base64.js"></script>
+  <script src="/tools.js"></script>
+  <script type="text/javascript">
+    function doRegister() {
+      document.getElementById('regisres').innerHTML = '';
+      let email = document.getElementById('email').value;
+      if (!email) {
+        alert('E-mail should not be empty');
+        document.getElementById('email').focus();
+        return
+      }
+      let name = document.getElementById('name').value;
+      if (!name) {
+        alert('User Name should not be empty');
+        document.getElementById('name').focus();
+        return
+      }
+      postData('/api/register', {email, name})
+      .then((response) => {
+        if (response.code != 0)
+          throw new Error(`error code: ${response.code}`);
+        let publicKey = preformatMakeCredReq(response.fido_register_request);
+        return navigator.credentials.create({publicKey});
+      })
+      .then((response) => {
+        let makeCredResponse = publicKeyCredentialToJSON(response);
+        return putData('/api/register', makeCredResponse);
+      })
+      .then((response) => {
+        if (response.code == 0) {
+          document.getElementById('regisres').innerHTML = 'SUCCESS'
+          console.log('register success, response: ', {uid: response.uid,key_info:response.key_info})
+        }
+        else {
+          document.getElementById('regisres').innerHTML = 'FAIL'
+          console.log('error code:', response.code)
+        }
+      })
+      .catch((error) => {
+        if (error.name === "NotAllowedError") {
+          // user cancel
+          // TODO: show something
+          console.log('user press cancel')
+        }
+        else if (error.name === "InvalidStateError") {
+          // key has registered credential
+          // TODO: show something
+          console.log('Security Key has been registered')
+        }
+        else {
+          // TODO: show something
+          console.log(error.message)
+        }
+        document.getElementById('regisres').innerHTML = 'FAIL'
+      })
+    }
+
+    function doLogin() {
+      document.getElementById('regisres').innerHTML = '';
+      postData('/api/login', {})
+      .then((response) => {
+        if (response.code != 0)
+          throw new Error(`error code: ${response.code}`);
+        let publicKey = preformatGetAssertReq(response.fido_login_request);
+        return navigator.credentials.get({publicKey});
+      })
+      .then((response) => {
+        let getCredResponse = publicKeyCredentialToJSON(response);
+        return putData('/api/login', getCredResponse);
+      })
+      .then((response) => {
+        if (response.code == 0) {
+          document.getElementById('regisres').innerHTML = 'SUCCESS'
+          console.log(`user (${response.user}) login success, key_info: (${response.key_info})`)
+        }
+        else {
+          document.getElementById('regisres').innerHTML = 'FAIL'
+          console.log('error code: ', response.code)
+        }
+      })
+      .catch((error) => {
+        if (error.name === "NotAllowedError") {
+          // user cancel
+          // TODO: show something
+          console.log('user press cancel')
+        }
+        else {
+          // TODO
+          console.log(error.message)
+        }
+        document.getElementById('regisres').innerHTML = 'FAIL'
+      })
+    }
+
+    function doVerify() {
+      document.getElementById('regisres').innerHTML = ''
+      let email = document.getElementById('email').value;
+      if (!email) {
+        alert('E-mail should not be empty');
+        document.getElementById('email').focus();
+        return
+      }
+
+      postData('/api/identity', {email})
+      .then((response) => {
+        if (response.code != 0)
+          throw new Error(`error code: ${response.code}`);
+        let publicKey = preformatGetAssertReq(response.fido_auth_request);
+        return navigator.credentials.get({publicKey});
+      })
+      .then((response) => {
+        let getCredResponse = publicKeyCredentialToJSON(response);
+        return putData('/api/identity', getCredResponse);
+      })
+      .then((response) => {
+        if (response.code == 0) {
+          document.getElementById('regisres').innerHTML = 'SUCCESS'
+          console.log(`user ${email}(${response.uid}) identity verified, key_info: (${response.key_info})`)
+        }
+        else {
+          document.getElementById('regisres').innerHTML = 'FAIL'
+          console.log('error code: ', response.code)
+        }
+      })
+      .catch((error) => {
+        if (error.name === "NotAllowedError") {
+          // user cancel or not registered security key
+          // TODO: show something
+          console.log('user press cancel, or this Security Key was not registered for this user')
+        }
+        else {
+          // TODO: show something
+          console.log(error.message)
+        }
+        document.getElementById('regisres').innerHTML = 'FAIL'
+      })
+    }
+
+    function doGetUsers() {
+      document.getElementById('userlist').value = '';
+      let path='/api/registeredUsers';
+      let i = document.getElementById('pageIndex').value;
+      let s = document.getElementById('pageSize').value;
+      if (i || s)
+        path += '?';
+      if (i && s)
+        path += `page=${i}&size=${s}`;
+      else if (i)
+        path += `page=${i}`;
+      else if (s)
+        path += `size=${s}`;
+      getData(path)
+      .then((response) => {
+        if (response.code == 0) {
+          let displayList = response.users.map((user) => {
+            return JSON.stringify({id:user.id,name:user.name})
+          })
+          document.getElementById('userlist').value = displayList.join('\n');
+          console.log('response from server: total ' + response.total, response.users)
+        }
+        else {
+          document.getElementById('userlist').value = 'FAIL'
+          console.log('error code: ', response.code)
+        }
+      })
+    }
+
+    function doChangeUserState() {
+      document.getElementById('ustateres').innerHTML = ''
+      let uid = document.getElementById('userIdForState').value;
+      if (!uid) {
+        alert('user id is empty')
+        document.getElementById('userIdForState').focus();
+        return
+      }
+
+      let newState = '';
+      let items = document.getElementsByName('userState');
+      for (let i of items) {
+        if (i.checked)
+          newState = i.value;
+      }
+
+      if (!newState) {
+        alert('state is not select');
+        return;
+      }
+
+      let data = {uid, state: newState};
+      putData('/api/updateuserstate', data)
+      .then((response) => {
+        if (response.code == 0) {
+          document.getElementById('ustateres').innerHTML = 'SUCCESS'
+          console.log(`user ${response.user.name}(${response.user.id}) change state to: ${response.user.state}`)
+        }
+        else {
+          document.getElementById('ustateres').innerHTML = 'FAIL'
+          console.log('error code: ', response.code)
+        }
+      })
+    }
+
+    function doDeleteUser() {
+      document.getElementById('udelres').innerHTML = ''
+      let uid = document.getElementById('userIdForDelete').value;
+      if (!uid) {
+        alert('user id empty');
+        document.getElementById('userIdForDelete').focus();
+        return;
+      }
+
+      putData('/api/removeregisteruser', {uid})
+      .then((response) => {
+        if (response.code == 0) {
+          document.getElementById('udelres').innerHTML = 'SUCCESS'
+          console.log(`delete user ${response.deleteUser.name}(${response.deleteUser.id}), and ${response.deleteUserRegisterKeys} registered Security Keys`)
+        }
+        else {
+          document.getElementById('udelres').innerHTML = 'FAIL'
+          console.log('error code: ', response.code)
+        }
+      });
+    }
+
+    function doGetUserKeys() {
+      document.getElementById('keylist').value = ''
+      let uid = document.getElementById('userIdForKeys').value;
+      if (!uid) {
+        alert('user id empty');
+        document.getElementById('userIdForKeys').focus();
+        return;
+      }
+
+      path = `/api/registerKeys/${uid}`
+
+      getData(path)
+      .then((response) => {
+        if (response.code == 0) {
+          let displayList = response.keys.map((key) => {return JSON.stringify(key)})
+          document.getElementById('keylist').value = displayList.join('\n')
+        }
+        else {
+          document.getElementById('keylist').value = 'error code: ' + response.code;
+        }
+      })
+    }
+
+    function doUpdateKeyName() {
+      document.getElementById('knameres').innerHTML = '';
+      let uid = document.getElementById('userIdForKeyName').value;
+      if (!uid) {
+        alert('user id empty');
+        document.getElementById('userIdForKeyName').focus();
+        return;
+      }
+
+      let kid = document.getElementById('keyIdForName').value;
+      if (!kid) {
+        alert('key id empty');
+        document.getElementById('keyIdForName').focus();
+        return;
+      }
+
+      let kname = document.getElementById('newKeyName').value;
+
+      let postData = {uid, kid, kname};
+      putData('/api/changekeyname', postData)
+      .then((response) => {
+        if (response.code == 0) {
+          document.getElementById('knameres').innerHTML = 'SUCCESS'
+          console.log('response: ', response.key_info)
+        }
+        else {
+          document.getElementById('knameres').innerHTML = 'FAIL'
+          console.log('error code: ', response.code)
+        }
+      })
+    }
+
+    function doDeleteKey() {
+      document.getElementById('kdelres').innerHTML = '';
+      let uid = document.getElementById('userIdForDeletKey').value;
+      if (!uid) {
+        alert('user id empty');
+        document.getElementById('userIdForDeletKey').focus();
+        return;
+      }
+
+      let kid = document.getElementById('keyIdForDeletKey').value;
+      if (!kid) {
+        alert('key id empty');
+        document.getElementById('keyIdForDeletKey').focus();
+        return;
+      }
+
+      let postData = {uid, kid};
+
+      putData('/api/deleteregisterkey', postData)
+      .then((response) => {
+        if (response.code == 0) {
+          document.getElementById('kdelres').innerHTML = 'SUCCESS'
+          console.log('deleteKeys: ', response.deleteKeys)
+        }
+        else {
+          document.getElementById('kdelres').innerHTML = 'FAIL'
+          console.log('error code: ', response.code)
+        }
+
+      })
+    }
+  </script>
+</head>
+<body style="margin:0">
+  <div class="menu"><h3>FIDO RP DEMO</h3></div>
+  <div class="panel"><div class="w-area">
+
+    <div class="block-row">
+      <div class="block" style="width:47%">
+        <div class="block-title">
+          <label>FIDO2</label><label class="fr" id="regisres"></label>
+        </div>
+        <div class="block-line"></div>
+        <div class="fl" style="width:30%">
+          <label class="br sub-title">E-mail</label>
+          <input type="text" id="email"/>
+        </div>
+        <div class="fl" style="width:30%">
+          <label class="br sub-title">Your Name</label>
+          <input type="text" id="name"/>
+        </div>
+        <div class="fl" style="width:38%">
+          <a onclick="doRegister()" href="javascript:void(0)">Start Register</a>
+          <a onclick="doLogin()" href="javascript:void(0)">Test First Factor</a>
+          <a onclick="doVerify()" href="javascript:void(0)">Test Second Factor</a>
+        </div>
+      </div>
+
+      <div class="block" style="width:23%">
+        <div class="block-title">
+          <label>User State</label><label class="fr" id="ustateres"></label>
+        </div>
+        <div class="block-line"></div>
+        <div class="br sub-title">
+          <label style="width:33%">User ID</label>
+          <div class="fr" style="width:67%">
+            <label class="sel" style="width:33%"><input type="radio" name="userState" value="activate">Activate</label>
+            <label class="sel" style="width:33%"><input type="radio" name="userState" value="suspend">Suspend</label>
+          </div>
+        </div>
+        <input type="text" id="userIdForState"><div class="pad"></div>
+        <a onclick="doChangeUserState()" href="javascript:void(0)">Change User State</a>
+      </div>
+
+      <div class="block" style="width:23%">
+        <div class="block-title">
+          <label>Delete User</label><label class="fr" id="udelres"></label>
+        </div>
+        <div class="block-line"></div>
+        <label class="br sub-title">User ID:</label>
+        <input type="text" id="userIdForDelete"><div class="pad"></div>
+        <a onclick="doDeleteUser()" href="javascript:void(0)">Delete User</a>
+      </div>
+
+    </div>
+    <div class="block-row">
+      <div class="block" style="width:97%">
+        <div class="block-title">
+          <label>User List</label>
+        </div>
+        <div class="block-line"></div>
+        <div class="fl" style="width:47%">
+          <div style="width:100%;height:120px">
+            <div class="fl" style="width:40%">
+              <label class="br sub-title">page index(start from 1)</label>
+              <input type="text" id="pageIndex"><br>
+            </div>
+            <div class="fl" style="width:40%">
+              <label class="br sub-title">page max size(20 ~ 100)</label>
+              <input type="text" id="pageSize">
+            </div>
+          </div>
+          <div class="pad"></div><a onclick="doGetUsers()" href="javascript:void(0)">Test User List</a>
+        </div>
+        <div class="fl" style="width:52%;height:200px">
+          <label class="br sub-title">Result</label>
+          <textarea id="userlist"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="block-row">
+      <div class="block" style="width:97%">
+        <div class="block-title">
+          <label>Get User Keys</label>
+        </div>
+        <div class="block-line"></div>
+        <div class="fl" style="width:47%">
+          <div style="width:40%;height:120px">
+            <label class="br sub-title">User ID</label>
+            <input type="text" id="userIdForKeys">
+          </div>
+          <div class="pad"></div><a onclick="doGetUserKeys()" href="javascript:void(0)">Get User Keys</a>
+        </div>
+        <div class="fl" style="width:52%;height:200px">
+          <label class="br sub-title">Result</label>
+          <textarea id="keylist"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="block-row">
+      <div class="block" style="width:47%">
+        <div class="block-title">
+          <label>Update Key Name</label><label class="fr" id="knameres"></label>
+        </div>
+        <div class="block-line"></div>
+        <div style="width:100%;height:120px">
+          <div class="fl" style="width:33%">
+            <label class="br sub-title">User ID</label>
+            <input type="text" id="userIdForKeyName">
+          </div>
+          <div class="fl" style="width:33%">
+            <label class="br sub-title">Key ID</label>
+            <input type="text" id="keyIdForName">
+          </div>
+          <div class="fl" style="width:33%">
+            <label class="br sub-title">Key Name</label>
+            <input type="text" id="newKeyName">
+          </div>
+        </div>
+        <div class="pad"></div><a onclick="doUpdateKeyName()" href="javascript:void(0)">Update Key Name</a>
+      </div>
+      <div class="block" style="width:33%">
+        <div class="block-title">
+          <label>Delete Key</label><label class="fr" id="kdelres"></label>
+        </div>
+        <div class="block-line"></div>
+        <div style="width:100%;height:120px">
+          <div class="fl" style="width:48%">
+            <label class="br sub-title">User ID</label>
+            <input type="text" id="userIdForDeletKey">
+          </div>
+          <div class="fl" style="width:48%">
+            <label class="br sub-title">Key ID</label>
+            <input type="text" id="keyIdForDeletKey">
+          </div>
+        </div>
+        <div class="pad"></div><a onclick="doDeleteKey()" href="javascript:void(0)">Delete Key</a>
+      </div>
+    </div>
+  </div></div>
+</body>
+</html>
