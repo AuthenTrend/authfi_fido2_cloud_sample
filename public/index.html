@@ -314,6 +314,108 @@
 
       })
     }
+
+    function doGetRQRCodeAndPoll() {
+      document.getElementById('apprres').innerHTML = '';
+      var timeout = 0;
+      async function pollResult(token) {
+        setTimeout(() => {
+          let ct = (new Date()).valueOf();
+          if (ct > timeout) {
+            document.getElementById('apprres').innerHTML = 'QRCode TIMEOUT';
+          }
+          else {
+            getData(`/api/register/app/result?t=${token}`)
+            .then((res) => {
+              if (res.code === 0) {
+                if (res.app_result === 0) {
+                  document.getElementById('apprres').innerHTML = 'SUCCESS';
+                } else if (res.app_result === 2) {
+                  document.getElementById('apprres').innerHTML = 'FAIL';
+                } else {
+                  pollResult(token);
+                }
+              } else {
+                document.getElementById('apprres').innerHTML = 'FAIL';
+                console.log('some thing wrong');
+              }
+            })
+            .catch((err) => {
+              console.log('poll app result fail: ', err.message)
+              document.getElementById('apprres').innerHTML = 'FAIL';
+            })
+          }
+        }, 1000);
+      };
+
+      let email = document.getElementById('appemail').value;
+      if (!email) {
+        alert('E-mail should not be empty');
+        document.getElementById('appemail').focus();
+        return;
+      }
+      let name = document.getElementById('appname').value;
+      postData('/api/register/qrcode', {email, name})
+      .then((res) => {
+        if (res.code !== 0)
+          throw new Error(`error: ${res.code}`);
+        timeout = res.expire_at;
+        document.getElementById('qr1').innerHTML = `<img src="data:image/png;base64,${res.image}" width="200" height="200">`;
+        pollResult(res.token);
+      })
+      .catch((err) => {
+        document.getElementById('apprres').innerHTML = 'FAIL';
+        console.log('get qrcode error: ', err.message);
+      })
+    }
+
+    function doGetLQRCodeAndPoll() {
+      document.getElementById('applres').innerHTML = '';
+      var timeout = 0;
+      async function pollResult(token) {
+        setTimeout(() => {
+          let ct = (new Date()).valueOf();
+          if (ct > timeout) {
+            document.getElementById('applres').innerHTML = 'QRCode TIMEOUT';
+          }
+          else {
+            getData(`/api/verify/app/result?t=${token}`)
+            .then((res) => {
+              if (res.code !== 0) {
+                document.getElementById('applres').innerHTML = 'FAIL';
+                console.log('some thing wrong');
+              } else {
+                if (res.app_result === 0) {
+                  document.getElementById('applres').innerHTML = 'SUCCESS';
+                } else if (res.app_result === 2) {
+                  document.getElementById('applres').innerHTML = 'FAIL';
+                } else {
+                  pollResult(token);
+                }
+              }
+            })
+            .catch((err) => {
+              document.getElementById('applres').innerHTML = 'FAIL';
+            })
+          }
+        }, 1000);
+      }
+
+      var u = new URL(window.location);
+      getData('/api/verify/qrcode')
+      .then((res) => {
+        if (res.code !== 0)
+          throw new Error(`error: ${res.code}`);
+
+        timeout = res.expire_at;
+        document.getElementById('qr2').innerHTML = `<img src="data:image/png;base64,${res.image}" width="200" height="200">`;
+        pollResult(res.token);
+      })
+      .catch((err) => {
+        document.getElementById('applres').innerHTML = 'FAIL';
+        console.log('get qrcode error: ', err.message);
+      })
+    }
   </script>
 </head>
 <body style="margin:0">
@@ -366,8 +468,48 @@
         <input type="text" id="userIdForDelete"><div class="pad"></div>
         <a onclick="doDeleteUser()" href="javascript:void(0)">Delete User</a>
       </div>
-
     </div>
+
+    <div class="block-row">
+      <div class="block" style="width:90%">
+        <div class="block-title">
+          <label>App Register</label><label class="fr" id="apprres"></label>
+        </div>
+        <div class="block-line"></div>
+        <div class="fl" style="width:15%">
+          <label class="br sub-title">E-mail</label>
+          <input type="text" id="appemail"/>
+        </div>
+        <div class="fl" style="width:15%">
+          <label class="br sub-title">Your Name</label>
+          <input type="text" id="appname"/>
+        </div>
+        <div class="fl" style="width:20%">
+          <label class="br sub-title">&nbsp;</label>
+          <div id="qr1"></div>
+        </div>
+        <div class="fl" style="width:19%">
+          <a onclick="doGetRQRCodeAndPoll()" href="javascript:void(0)">Get New QRCode</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="block-row">
+      <div class="block" style="width:90%">
+        <div class="block-title">
+          <label>App Login</label><label class="fr" id="applres"></label>
+        </div>
+        <div class="block-line"></div>
+        <div class="fl" style="width:20%">
+          <label class="br sub-title">&nbsp;</label>
+          <div id="qr2"></div>
+        </div>
+        <div class="fl" style="width:19%">
+          <a onclick="doGetLQRCodeAndPoll()" href="javascript:void(0)">Get New QRCode</a>
+        </div>
+      </div>
+    </div>
+
     <div class="block-row">
       <div class="block" style="width:97%">
         <div class="block-title">

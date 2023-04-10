@@ -38,6 +38,10 @@ function putData(url, content) {
   })
 }
 
+function stringToArrayBuffer(str) {
+  return Uint8Array.from(str, c => c.charCodeAt(0)).buffer;
+}
+
 function arrayBufferToString(arrayBuffer) {
   return String.fromCharCode.apply(null, new Uint8Array(arrayBuffer));
 }

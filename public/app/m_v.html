@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+	<style type="text/css">
+		.text-info{font-size:20px; display: block;}
+		.tx-button{font-size: 24px; display: inline-block; border-radius:8px; padding: 15px 18px; background-color: #888888; color: #112255;}
+		.tx-button:hover{background-color: #88aa88;cursor: pointer;}
+		.tx-button:active{background-color: #aa22bb;}
+	</style>
+	<script src="/base64.js"></script>
+	<script src="/tools.js"></script>
+	<script type="text/javascript">
+		var btnUsed = false;
+		var bu = '';
+		async function doVerify() {
+			if (btnUsed) return;
+
+			btnUsed = true;
+			var u = new URL(window.location);
+			postData('/api/mobile/verify',
+				{
+					token: u.searchParams.get('t'),
+					email: arrayBufferToString(base64url.decode(u.searchParams.get('email')))
+				})
+			.then((res) => {
+				if (res.code !== 0)
+					throw new Error(`error: ${res.code}`);
+
+				let publicKey = preformatGetAssertReq(res.fido_auth_request);
+				return navigator.credentials.get({publicKey});
+			})
+			.then((res) => {
+				let getCredResponse = publicKeyCredentialToJSON(res);
+				return putData('/api/mobile/verify', {token: u.searchParams.get('t'), fidoResp: getCredResponse})
+			})
+			.then((res) => {
+				if (res.code !== 0)
+					throw new Error(`error: ${res.code}`);
+
+				bu = arrayBufferToString(base64url.decode(u.searchParams.get('redirect'))) + '?status=success';
+				setTimeout(() => {
+					document.getElementById('manbtn').style.display='inline-block';
+					window.location = bu;},
+				3000);
+			})
+			.catch((err) => {
+				console.log('something wrong - ', err.message);
+				let r = new URL('http://localhost/');
+				r.searchParams.set('status', 'fail');
+				r.searchParams.set('errorMessage', base64url.encode(stringToArrayBuffer(err.message)));
+				bu = arrayBufferToString(base64url.decode(u.searchParams.get('redirect'))) + r.search;
+				setTimeout(() => {
+					document.getElementById('manbtn').style.display='inline-block';
+					window.location = bu;},
+				3000);
+			})
+		}
+		function goBackToApp() {
+			window.location = bu;
+		}
+	</script>
+</head>
+<body>
+	<div>
+		<label class="text-info">Click To Verify with authenticator App</label>
+		<span class="tx-button" onclick="doVerify()">Verify</span>
+	</div>
+	<div id="manbtn" hidden>
+		<label>If not go back to authenticator App automatically, please click <a href="javascript:void(0)" onclick="goBackToApp()">here</a> to go back to App.</label>
+	</div>
+
+</body>
+</html>
