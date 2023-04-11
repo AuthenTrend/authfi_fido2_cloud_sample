@@ -25,14 +25,14 @@ Here explan how to use mobile device as external security key of WebAuthn for co
 
 #### Registeration
 
-First need a web page for mobile device to trigger register event. We use [app/m_r.html](public/app/m_r.html) to do this job.    
+First need a web page for mobile device to trigger register event. We use [public/app/m_r.html](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/public/app/m_r.html) to do this job.    
 Then relying party will query a QRCode from AuthFi server via ```POST /{API_ACCESSPOINT}/api/v1/mobile/registration/qrcode```. You will send user information and web page url for the QRCode.    
 Turn on AuthFi Authenticator App on mobile device, scan the QRCode. Click the register button to trigger register event, pass biometrics verification, and wait for AuthFi server to response registration result.    
 After mobile device credential create and registered, the service on computer will receive result from AuthFi API, means user had just register a new security key, and it could guid user to rename the new registered security key or others.    
 
 #### Verification
 
-To do WebAuthn verification, it need a web page for mobile device to trigger verify event. We use [app/m_v.html](public/app/m_v.html) to do this job.    
+To do WebAuthn verification, it need a web page for mobile device to trigger verify event. We use [public/app/m_v.html](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/public/app/m_v.html) to do this job.    
 Then relying party will query a QRCode from AuthFi server
 via ```POST /{API_ACCESSPOINT}/api/v1/mobile/verification/qrcode```. You will send web page url for the QRCode.    
 Turn on AuthFi Authenticator App on mobile device, click the account you want to do WebAuthn verification. It will turn on camera to scan the QRCode on computer UI.    

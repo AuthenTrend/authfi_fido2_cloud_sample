@@ -2,7 +2,7 @@
 
 For mobile devices with Android >= 14 or iOS >= 16, iPad OS >= 16, Google and Apple anounce Passkey so user can sync credential and key between terminal devices.    
     
-For devices with Android < 14 or iOS < 16, iPad OS < 16, please see [Non_Passkey.md](Non_Passkey.md)    
+For devices with Android < 14 or iOS < 16, iPad OS < 16, please see [Non_Passkey.md](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/doc/Mobile/Non_Passkey.md)    
 
 ### Requirement
 
@@ -23,16 +23,16 @@ Here explane how mobile device with Passkey work as external security key for co
 When try to register new security key with ```authenticatorAttachment: cross-platform```, browser will show new feature so you can register Passkey with computer.
 
 Safari on Mac
-![alt text](img/01.png)
-![alt text](img/02.png)
+![alt text](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/doc/Mobile/img/01.png)
+![alt text](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/doc/Mobile/img/02.png)
 
 Microsoft Edge on PC
-![alt text](img/03.png)
-![alt text](img/04.png)
+![alt text](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/doc/Mobile/img/03.png)
+![alt text](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/doc/Mobile/img/04.png)
 
 Google Chrome on PC/Mac
-![alt text](img/03.png)
-![alt text](img/04.png)
+![alt text](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/doc/Mobile/img/05.png)
+![alt text](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/doc/Mobile/img/06.png)
 
 Turn on QRCode scanner on mobile device and scan QRCode, mobile will connect to computer and ask for biometric verification.    
 After verified, mobile device will register a credential for you.    

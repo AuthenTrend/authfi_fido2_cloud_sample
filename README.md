@@ -8,7 +8,7 @@ It written in Nodejs express on server side.
 Add input options for Passkey mobile device to register and verify.    
 
 #### How mobile authenticator application work
-Please refer to [doc/Mobile/](doc/Mobile) to see more details.
+Please refer to [doc/Mobile/](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/doc/Mobile/) to see more details.
 
 #### Setup
 
