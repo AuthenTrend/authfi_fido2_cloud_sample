@@ -40,7 +40,6 @@ async function doRegisterOption(token) {
         },
         authenticatorSelection: {
             authenticatorAttachment: 'platform',
-            residentKey: 'preferred',
             requireResidentKey: true,
             userVerification: 'required'
         },

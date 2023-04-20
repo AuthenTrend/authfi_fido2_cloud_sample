@@ -14,7 +14,6 @@ async function doRegisterOption(userAccount, userName, options) {
         },
         authenticatorSelection: {
             authenticatorAttachment: 'cross-platform',
-            residentKey: 'preferred',
             requireResidentKey: true,
             userVerification: 'required'
         },
@@ -27,16 +26,6 @@ async function doRegisterOption(userAccount, userName, options) {
                 case 'cross-platform':
                 case 'platform': {
                     params.authenticatorSelection.authenticatorAttachment = options.authenticatorAttachment;
-                    break;
-                }
-            }
-        }
-        if (typeof options.residentKey === 'string') {
-            switch (options.residentKey) {
-                case 'preferred':
-                case 'required':
-                case 'discouraged': {
-                    params.authenticatorSelection.residentKey = options.residentKey;
                     break;
                 }
             }
