@@ -4,6 +4,10 @@ For mobile devices with Android >= 14 or iOS >= 16, iPad OS >= 16, Google and Ap
     
 For devices with Android < 14 or iOS < 16, iPad OS < 16, please see [Non_Passkey.md](https://github.com/AuthenTrend/authfi_fido2_cloud_sample/blob/master/doc/Mobile/Non_Passkey.md)    
 
+### Samples
+
+For mobile application sample code with Passkey, please refer to [github sample here](https://github.com/AuthenTrend/rp-app-example)
+
 ### Requirement
 
 Using Passkey with PC/Mac, you'll need:

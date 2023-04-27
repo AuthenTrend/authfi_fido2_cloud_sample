@@ -3,6 +3,10 @@
 For mobile devices with Android < 14, or iOS < 16, iPad OS < 16, which are only partial feature of Passkey, or just regular FIDO2 foramt credential.    
 We supply a way for mobile device as external security key to register/verify for service show on computer UI.    
 
+### Samples
+
+For mobile application sample code follow process below, it can be find on [github sample here](https://github.com/AuthenTrend/atauthfi_authenticator)
+
 ### Requirement
 
 Using WebAuthn with PC/Mac, you'll need:
